@@ -20,10 +20,11 @@
             const fieldCount = 20;
             const speed = 1000 / 2;
             const generateChance = 8 * (1/100);
+            const poopChance = 5 * (1/100);
 
             var canvas = document.getElementById("dercanvas")
-            canvas.width = window.innerWidth ;
-            canvas.height = window.innerHeight  ;
+            canvas.width = window.innerWidth - 50 ;
+            canvas.height = window.innerHeight - 50  ;
             var fieldWidth = canvas.width / fieldCount;
             window.onresize = (e) => {
                 canvas.width = window.innerWidth - 50;
@@ -62,14 +63,14 @@
 
                     drawSnake();
 
-                    context.fillStyle = "#f00";
                     food.forEach(f => {
+                        context.fillStyle = f.color || "#f00";
                         context.fillRect(f.x * fieldWidth, f.y * fieldWidth, fieldWidth, fieldWidth);
                     });
 
                     setTimeout(() => {
                         window.requestAnimationFrame(draw);
-                    }, speed / (snake.length / 3));
+                    }, speed / (((snake.length - 1) / 4) + 1));
                 } else {
                     context.fillStyle = "red";
                     context.textAlign = "center";
@@ -77,18 +78,24 @@
                     context.fillText("You failed with " + snake.length + " points", canvas.width/2, canvas.height/2);
                 }
             }
-            function update() {
-                addHead();
-                snake.shift();
+            function update(dontRemove) {
                 if(dirQueue.length > 0) dir = dirQueue.shift();
+                addHead();
+                if(!dontRemove) {
+                    var last = snake.shift();
+                    if(Math.random() < poopChance) {
+                        last.color = "#964B00";
+                        food.push(last);
+                    }
+                }
 
                 if(Math.random() < generateChance) {
                     food.push({x: Math.floor(Math.random() * fieldCount), y: Math.floor(Math.random() * fieldCount)});
                 }
                 var head = snake[snake.length - 1];
                 if(food.filter(f => f.x == head.x && f.y == head.y).length > 0) {
-                    addHead();
                     food = food.filter(f => !(f.x == head.x && f.y == head.y));
+                    update(true);
                 }
                 if(snake.filter(sn => sn.x == head.x && sn.y == head.y).length > 1) {
                     running = false;
